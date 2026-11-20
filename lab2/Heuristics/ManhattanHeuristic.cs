@@ -14,7 +14,7 @@ namespace lab2.Heuristics
                 int tile = state.Board[i];
                 if (tile == 0) continue;
 
-                int goalIndex = tile == 0 ? 8 : tile - 1; // 1→0, 2→1, ..., 8→7, 0→8
+                int goalIndex = tile - 1;
                 int curRow = i / 3, curCol = i % 3;
                 int goalRow = goalIndex / 3, goalCol = goalIndex % 3;
                 distance += Math.Abs(curRow - goalRow) + Math.Abs(curCol - goalCol);

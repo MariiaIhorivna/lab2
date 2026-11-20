@@ -68,7 +68,6 @@ namespace lab2.Models
 
         public override int GetHashCode()
         {
-            // Простий і швидкий хеш для 9 елементів
             int hash = 17;
             foreach (int x in Board)
                 hash = hash * 31 + x;

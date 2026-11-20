@@ -8,41 +8,41 @@ Console.OutputEncoding = System.Text.Encoding.UTF8;
 Console.WriteLine("=== 8-Puzzle Solver ===\n");
 
 // ----- Тестовий початковий стан -----
-var testState = new PuzzleState(new[] { 4, 5, 7, 8, 0, 6, 1, 3, 2 });
+//var testState = new PuzzleState(new[] { 4, 5, 7, 8, 0, 6, 1, 3, 2 });
 // Можна взяти інший, наприклад складніший:
 // var testState = new PuzzleState(new[] { 7, 2, 4, 5, 0, 6, 8, 3, 1 });
-if (!PuzzleState.IsSolvable(testState.Board))
-{
-    Console.WriteLine("Таку конфігурацію неможливо розв'язати, спробуйте іншу.");
-} else
-{
-    Console.WriteLine("Тестовий початковий стан:");
-    Console.WriteLine(testState);
+//if (!PuzzleState.IsSolvable(testState.Board))
+//{
+//    Console.WriteLine("Таку конфігурацію неможливо розв'язати, спробуйте іншу.");
+//} else
+//{
+//    Console.WriteLine("Тестовий початковий стан:");
+//    Console.WriteLine(testState);
 
-    var timeLimit = TimeSpan.FromMinutes(1);
+//    var timeLimit = TimeSpan.FromMinutes(1);
 
-    // ========== BFS ==========
-    var bfs = new BfsSolver();
-    var resBfs = bfs.Solve(testState, timeLimit);
-    PrintResult(bfs.Name, resBfs);
-    PrintPath(resBfs);          // ← вивід шляху
+//    // ========== BFS ==========
+//    var bfs = new BfsSolver();
+//    var resBfs = bfs.Solve(testState, timeLimit);
+//    PrintResult(bfs.Name, resBfs);
+//    PrintPath(resBfs);          // ← вивід шляху
 
-    // ========== A* Манхеттен ==========
-    var astarManhattan = new AStarSolver(new ManhattanHeuristic());
-    var resAManhattan = astarManhattan.Solve(testState, timeLimit);
-    PrintResult(astarManhattan.Name, resAManhattan);
-    PrintPath(resAManhattan);   // ← вивід шляху
+//    // ========== A* Манхеттен ==========
+//    var astarManhattan = new AStarSolver(new ManhattanHeuristic());
+//    var resAManhattan = astarManhattan.Solve(testState, timeLimit);
+//    PrintResult(astarManhattan.Name, resAManhattan);
+//    PrintPath(resAManhattan);   // ← вивід шляху
 
-    // ========== A* власна евристика ==========
-    var astarOwn = new AStarSolver(new LinearConflictHeuristic());
-    var resAOwn = astarOwn.Solve(testState, timeLimit);
-    PrintResult(astarOwn.Name, resAOwn);
-    PrintPath(resAOwn);         // ← вивід шляху
-}
+//    // ========== A* власна евристика ==========
+//    var astarOwn = new AStarSolver(new LinearConflictHeuristic());
+//    var resAOwn = astarOwn.Solve(testState, timeLimit);
+//    PrintResult(astarOwn.Name, resAOwn);
+//    PrintPath(resAOwn);         // ← вивід шляху
+//}
 
 // ----- Серія експериментів -----
 Console.WriteLine();
-var runner = new ExperimentRunner(TimeSpan.FromMinutes(1));
+var runner = new ExperimentRunner();
 runner.Run(count: 20);
 
 // Допоміжний метод для виводу результату

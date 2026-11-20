@@ -1,103 +1,82 @@
-﻿using lab2.Heuristics;
+﻿using lab2.Experiments;
+using lab2.Heuristics;
 using lab2.Models;
-using System;
-using System.Collections.Generic;
-using System.Diagnostics;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 
 namespace lab2.Solvers
 {
-    public class AStarSolver : ISolver
+    public class AStarSolver : SearchAlgorithm
     {
         private readonly IHeuristic _heuristic;
 
-        public AStarSolver(IHeuristic heuristic)
+        public AStarSolver(IHeuristic heuristic) => _heuristic = heuristic;
+
+        public override string Name => $"A* ({_heuristic.Name})";
+
+        public override SolverResult Solve(PuzzleState start)
         {
-            _heuristic = heuristic;
-        }
+            ResetStats();
 
-        public string Name => $"A* ({_heuristic.Name})";
-
-        public SolverResult Solve(PuzzleState start, TimeSpan timeLimit)
-        {
-            var sw = Stopwatch.StartNew();
-            var result = new SolverResult();
-
-            if (start.IsGoal())
+            try
             {
-                result.Success = true;
-                result.Path.Add(start);
-                return result;
-            }
+                if (start.IsGoal())
+                    return CreateResult(SearchStatus.Solved, 0, new List<PuzzleState> { start });
 
-            var open = new PriorityQueue<SearchNode, int>();
-            var gScore = new Dictionary<PuzzleState, int>();
-            var closed = new HashSet<PuzzleState>();
+                var open = new PriorityQueue<SearchNode, int>();
+                var gScore = new Dictionary<PuzzleState, int>();
+                var closed = new HashSet<PuzzleState>();
 
-            int h0 = _heuristic.Calculate(start);
-            var root = new SearchNode(start, null, 0, h0);
-            open.Enqueue(root, root.F);
-            gScore[start] = 0;
+                int h0 = _heuristic.Calculate(start);
+                var root = new SearchNode(start, null, 0, h0);
+                open.Enqueue(root, root.F);
+                gScore[start] = 0;
+                GeneratedStates = 1;
 
-            int generated = 1;
-            int maxMemory = 1;
-
-            while (open.Count > 0)
-            {
-                if (sw.Elapsed > timeLimit)
+                while (open.Count > 0)
                 {
-                    result.Message = "Час вичерпано";
-                    result.GeneratedStates = generated;
-                    result.MaxStatesInMemory = maxMemory;
-                    result.Time = sw.Elapsed;
-                    return result;
-                }
+                    var current = open.Dequeue();
 
-                var current = open.Dequeue();
-                result.Iterations++;
+                    if (closed.Contains(current.State))
+                        continue;
 
-                if (closed.Contains(current.State)) continue;
-                closed.Add(current.State);
+                    if (LimitsExceeded(out var status))
+                        return CreateResult(status);
 
-                if (current.State.IsGoal())
-                {
-                    result.Success = true;
-                    result.Steps = current.G;
-                    result.GeneratedStates = generated;
-                    result.MaxStatesInMemory = maxMemory;
-                    result.Time = sw.Elapsed;
-                    result.Path = ReconstructPath(current);
-                    return result;
-                }
+                    closed.Add(current.State);
+                    Iterations++;
 
-                foreach (var neighbor in current.State.GetNeighbors())
-                {
-                    if (closed.Contains(neighbor)) continue;
+                    if (current.State.IsGoal())
+                        return CreateResult(SearchStatus.Solved, current.G, ReconstructPath(current));
 
-                    int tentativeG = current.G + 1;
-
-                    if (!gScore.TryGetValue(neighbor, out int oldG) || tentativeG < oldG)
+                    foreach (var neighbor in current.State.GetNeighbors())
                     {
-                        generated++;
-                        int h = _heuristic.Calculate(neighbor);
-                        var node = new SearchNode(neighbor, current, tentativeG, h);
-                        open.Enqueue(node, node.F);
-                        gScore[neighbor] = tentativeG;
-                        maxMemory = Math.Max(maxMemory, open.Count + closed.Count + gScore.Count);
+                        if (closed.Contains(neighbor))
+                            continue;
+
+                        int tentativeG = current.G + 1;
+
+                        if (!gScore.TryGetValue(neighbor, out int oldG) || tentativeG < oldG)
+                        {
+                            GeneratedStates++;
+                            int h = _heuristic.Calculate(neighbor);
+                            var node = new SearchNode(neighbor, current, tentativeG, h);
+                            open.Enqueue(node, node.F);
+                            gScore[neighbor] = tentativeG;
+
+                            // Правильний підрахунок пам’яті (без подвійного рахунку)
+                            TrackMemory(open.Count + closed.Count);
+                        }
                     }
                 }
-            }
 
-            result.Message = "Розв’язок не знайдено";
-            result.GeneratedStates = generated;
-            result.MaxStatesInMemory = maxMemory;
-            result.Time = sw.Elapsed;
-            return result;
+                return CreateResult(SearchStatus.NoSolution);
+            }
+            catch (OutOfMemoryException)
+            {
+                return CreateResult(SearchStatus.OutOfMemory);
+            }
         }
 
-        private List<PuzzleState> ReconstructPath(SearchNode node)
+        private static List<PuzzleState> ReconstructPath(SearchNode node)
         {
             var path = new List<PuzzleState>();
             while (node != null)
